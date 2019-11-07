@@ -3,9 +3,9 @@ using System.Windows;
 using ToastNotifications;
 using ToastNotifications.Lifetime;
 using ToastNotifications.Messages;
-using ToastNotifications.Position; 
+using ToastNotifications.Position;
 
-namespace TaskManager.App
+namespace TaskManager.ViewModels
 {
     public class Toast
     {
@@ -30,7 +30,7 @@ namespace TaskManager.App
 
         public void showToast(String message)
         {
-            notifier.ShowInformation("Bonjour"); 
+            notifier.ShowInformation("Bonjour");
         }
     }
 }

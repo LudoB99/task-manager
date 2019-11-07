@@ -7,19 +7,24 @@ using System.Text;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Input;
+
 namespace TaskManager.ViewModels
 {
     public class MainViewModel : ViewModelBase<MainViewModel>
     {
+        Toast toast;
         public ICommand ShowToastCommand => new DelegateCommand(ShowToast);
 
         public MainViewModel()
         {
-            
+            toast = new Toast();
         }
-        public void ShowToast()
+        public void ShowToast() //Changer la fonction pour passer un paramètre message. 
         {
-            TaskManager.App.Toast toast = new TaskManager.App.Toast(); 
+            //GET MESSAGE; 
+            toast.showToast("ALLO");
         }
     }
 }
+  
+
