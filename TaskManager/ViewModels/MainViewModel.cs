@@ -36,12 +36,10 @@ namespace TaskManager.ViewModels
 
                 cfg.Dispatcher = Application.Current.Dispatcher;
             });
-            message = "coucou";
         }
-
         public void ShowToast()
         {
-            notifier.ShowInformation(message);
+            notifier.ShowInformation("Bonjour"); 
         }
     }
 }
