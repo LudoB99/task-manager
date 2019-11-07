@@ -18,6 +18,7 @@ namespace TaskManager.ViewModels
 
         private void ShowTMWindow()
         {
+            Console.WriteLine("Bonjour"); 
             if (!opened)
             {
                 opened = true;
