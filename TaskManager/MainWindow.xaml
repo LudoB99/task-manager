@@ -6,21 +6,35 @@
         xmlns:local="clr-namespace:TaskManager"
         xmlns:vm="clr-namespace:TaskManager.ViewModels"
         mc:Ignorable="d"
-        Title="MainWindow" Height="600" Width="500">
+        Title="Gestionnaire des tâches" Height="600" Width="500"
+        Icon="Resources\Icons\icon.ico">
     <Window.DataContext>
         <vm:MainViewModel />
     </Window.DataContext>
     <Grid>
-        <Grid.ColumnDefinitions>
-            <ColumnDefinition Width="1*"/>
-            <ColumnDefinition Width="1*"/>
-            <ColumnDefinition Width="1*"/>
-        </Grid.ColumnDefinitions>
-        <Grid.RowDefinitions>
-            <RowDefinition Height="1*" />
-            <RowDefinition Height="1*" />
-            <RowDefinition Height="1*" />
-        </Grid.RowDefinitions>
-        <Button Command="{Binding ShowToastCommand}" Content="Show Information" Margin="10" />
+        <TabControl>
+            <TabItem Header="Processus">
+                <ListView HorizontalAlignment="Center"
+                  Height="500" Margin="10,10,10,10" VerticalAlignment="Top" Width="450"
+                  Name="ProcessList">
+                    <ListView.View>
+                        <GridView>
+                            <GridViewColumn Header="Nom"
+                                    DisplayMemberBinding="{Binding Name}"
+                                    Width="150"/>
+                            <GridViewColumn Header="CPU %"
+                                    DisplayMemberBinding="{Binding CPU}"
+                                    Width="150"/>
+                            <GridViewColumn Header="RAM (Mo)"
+                                    DisplayMemberBinding="{Binding RAM}"
+                                    Width="150"/>
+                        </GridView>
+                    </ListView.View>
+                </ListView>
+            </TabItem>
+            <TabItem Header="Règles">
+
+            </TabItem>
+        </TabControl>
     </Grid>
 </Window>

@@ -2,6 +2,7 @@
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
+using System.Diagnostics;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -13,16 +14,24 @@ namespace TaskManager.ViewModels
     public class MainViewModel : ViewModelBase<MainViewModel>
     {
         Toast toast;
-        public ICommand ShowToastCommand => new DelegateCommand(ShowToast);
+        Process[] proc; 
+        //public ICommand ShowToastCommand => new DelegateCommand(ShowToast);
 
         public MainViewModel()
         {
-            toast = new Toast();
+            GetAllProcesses(); 
         }
-        public void ShowToast() //Changer la fonction pour passer un paramètre message. 
+
+        public void GetAllProcesses() 
         {
-            //GET MESSAGE; 
-            toast.showToast("ALLO");
+            proc = Process.GetProcesses().OrderBy(p => p.ProcessName).ToArray();
+
+            Console.WriteLine("System found {0} processes.", proc.Length);
+
+            foreach (Process p in proc) 
+            {
+                Console.WriteLine("Process: {0} ID: {1}", p.ProcessName, p.Id);
+            }
         }
     }
 }

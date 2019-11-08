@@ -13,23 +13,19 @@ namespace TaskManager.ViewModels
     {
         public ICommand ShowTMWindowCommand => new DelegateCommand(ShowTMWindow);
         public ICommand QuitApplicationCommand => new DelegateCommand(QuitApplication);
-
-        bool opened = false;
+        public SystemTrayViewModel() 
+        {
+            
+        }
 
         private void ShowTMWindow()
         {
-            Console.WriteLine("Bonjour"); 
-            if (!opened)
-            {
-                opened = true;
-                var window = new MainWindow();
-                window.Show();
-            }
+            var window = new MainWindow();
+            window.Show(); 
         }
 
         private void QuitApplication()
         {
-            opened = false;
             Application.Current.Shutdown();
         }
     }
