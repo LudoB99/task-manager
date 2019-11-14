@@ -16,36 +16,68 @@ namespace TaskManager.ViewModels
 {
     public class MainViewModel : ViewModelBase<MainViewModel>
     {
-        Toast toast;
-        List<Process> proc;
-        private Dispatcher dispatcher;
-        ObservableCollection<Proc> processList;
+        Toast toast; 
+        List<Process> Processes; // Liste de tous les processus actifs. 
+        private Dispatcher dispatcher; // Dispatcher, voir projet fait en classe. 
+        ObservableCollection<Proc> processList; // Liste des processus dans le XAML.
 
         public MainViewModel()
         {
-            dispatcher = Dispatcher.CurrentDispatcher;
-            processList = new ObservableCollection<Proc>();
-            proc = Process.GetProcesses().GroupBy(p => p.ProcessName).Select(group => group.First()).ToList();
+            Console.WriteLine("Démarrage");
+            dispatcher = Dispatcher.CurrentDispatcher; // Instancie le dispatcher qui gère la concurrence. 
+            processList = new ObservableCollection<Proc>(); // Instancie la liste des processus dans le XAML.
             Start();
         }
 
         public void Start() 
         {
-            InstanciateProcesses();  // Start le thread, peut faire .wait() pour être sur que c'est fini. 
+            Task.Run(UpdateAllProcesses).Wait();  // Update la liste, la boucle attend que l'update soit finie
+            Thread.Sleep(2000);
         }
 
-        public void InstanciateProcesses()
-        { 
-            Icon Ico = null;
-            foreach (Process proc in proc)
+        public void UpdateAllProcesses()
+        {
+            Processes = Process.GetProcesses().GroupBy(p => p.ProcessName).Select(group => group.First()).ToList();
+            for (int i = 0; i < 10; ++i) 
             {
-                List<String> instancesNames = new PerformanceCounterCategory("Process")
-                    .GetInstanceNames().Where(instanceName => instanceName.StartsWith(proc.ProcessName)).ToList();
-                foreach (String instance in instancesNames)
-                {
-                    processList.Add(new Proc(instance, 0, 0, null));
-                }
+                List<String> ProcessInstancesNames = GetInstancesNames(Processes[i]);
+                Task.Run(() => PopulateList(ProcessInstancesNames)).Wait(); // Affiche les informations des processus dans le XAML.          
+            } 
+        }
+
+        public void PopulateList(List <String> InstanceNames) 
+        {
+            foreach (String InstanceName in InstanceNames)
+            {
+                Proc Process = GetProcessInfos(InstanceName);
+                Console.WriteLine("On update le process {0}", InstanceName);
+                dispatcher.Invoke(() => UpdateList(Process)); /*UpdateList(Process)*/  // Affiche les informations d'un processus dans le XAML. 
+                Console.WriteLine("Processus {0} updaté", InstanceName);
             }
+        }
+        public void UpdateList(Proc NewProcess) 
+        {
+            Console.WriteLine("On update dans la liste le process {0}", NewProcess.Name);
+            Proc OldProcess = processList.FirstOrDefault(name => name.Name == NewProcess.Name); // Retoune le processus dans la liste. 
+            if (OldProcess != null) 
+            {
+                OldProcess = NewProcess;
+                Console.WriteLine("Le processus existait déjà, il y a encore {0} processus dans la liste.", processList.Count);
+                return; 
+            }
+            processList.Add(NewProcess); //Si le processus n'est pas dans la liste, on l'ajoute. 
+            Console.WriteLine("Le processus n'existait pas, il y a maintenant {0} processus dans la liste.", processList.Count);
+        }
+
+        public Proc GetProcessInfos(String ProcessName) 
+        {
+            return new Proc(ProcessName, 0, 0, null); 
+        }
+
+        public List<String> GetInstancesNames(Process Proc) // Retourne tous les noms d'instances (String) d'un processus (Process). 
+        {
+            return new PerformanceCounterCategory("Process")
+                    .GetInstanceNames().Where(instanceName => instanceName.StartsWith(Proc.ProcessName)).ToList();
         }
 
         public ObservableCollection<Proc> ProcessList
