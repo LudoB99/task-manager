@@ -14,19 +14,23 @@
     <Grid>
         <TabControl>
             <TabItem Header="Processus">
-                <ListView HorizontalAlignment="Center"
-                  Height="500" Margin="10,10,10,10" VerticalAlignment="Top" Width="450"
-                  Name="ProcessList">
+                <ListView 
+                    HorizontalAlignment="Center"
+                    Height="500" Margin="10,10,10,10" 
+                    VerticalAlignment="Top" 
+                    Width="450"
+                    ItemsSource="{Binding ProcessList}">
                     <ListView.View>
-                        <GridView>
+                        <GridView AllowsColumnReorder="true">
                             <GridViewColumn Header="Nom"
-                                    DisplayMemberBinding="{Binding Name}"
-                                    Width="150"/>
+                                    DisplayMemberBinding="{Binding Path=Name}"
+                                    Width="150">
+                            </GridViewColumn>
                             <GridViewColumn Header="CPU %"
-                                    DisplayMemberBinding="{Binding CPU}"
+                                    DisplayMemberBinding="{Binding Path=Cpu}"
                                     Width="150"/>
                             <GridViewColumn Header="RAM (Mo)"
-                                    DisplayMemberBinding="{Binding RAM}"
+                                    DisplayMemberBinding="{Binding Path=Ram}"
                                     Width="150"/>
                         </GridView>
                     </ListView.View>
