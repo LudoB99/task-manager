@@ -10,12 +10,12 @@ namespace TaskManager.ViewModels
     public class Proc
     {
         public string Name { get; set; }
-        public double Cpu { get; set; }
-        public long Ram { get; set; }
+        public string Cpu { get; set; }
+        public string Ram { get; set; }
         public Icon Icon { get; set; }
 
 
-        public Proc(String name, double cpu, long ram, Icon Icon)
+        public Proc(String name, string cpu, string ram, Icon Icon)
         {
             this.Name = name;
             this.Cpu = cpu;

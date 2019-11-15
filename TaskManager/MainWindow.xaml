@@ -29,7 +29,7 @@
                             <GridViewColumn Header="CPU %"
                                     DisplayMemberBinding="{Binding Path=Cpu}"
                                     Width="150"/>
-                            <GridViewColumn Header="RAM (Mo)"
+                            <GridViewColumn Header="{Binding TotalRam}"
                                     DisplayMemberBinding="{Binding Path=Ram}"
                                     Width="150"/>
                         </GridView>

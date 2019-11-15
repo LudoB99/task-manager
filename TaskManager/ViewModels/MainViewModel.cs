@@ -19,6 +19,7 @@ namespace TaskManager.ViewModels
         Toast toast; 
         List<Process> Processes; // Liste de tous les processus actifs. 
         private Dispatcher Dispatch;
+        private long totalRam; 
         ObservableCollection<Proc> processList; // Liste des processus dans le XAML.
 
         public MainViewModel()
@@ -30,8 +31,7 @@ namespace TaskManager.ViewModels
         }
         public void Start() 
         {
-            Thread Thread = new Thread (UpdateAllProcesses);
-            Thread.Start();
+            Task.Run(() => UpdateAllProcesses());
         }
 
         public void UpdateAllProcesses()
@@ -42,8 +42,12 @@ namespace TaskManager.ViewModels
                 foreach (Process Process in Processes)
                 {
                     List<String> ProcessInstancesNames = GetInstancesNames(Process);
-                    Task.Run(() => PopulateList(ProcessInstancesNames)).Wait(); // Affiche les informations des processus dans le XAML.
+                    Task.Run(() => PopulateList(ProcessInstancesNames)); // Affiche les informations des processus dans le XAML.
                 }
+                Dispatch.Invoke(() => 
+                {
+                    TotalRam = UpdateRamCounter();
+                });
             }
         }
 
@@ -57,19 +61,52 @@ namespace TaskManager.ViewModels
         }
         public void UpdateList(Proc NewProcess) 
         {
-            Proc OldProcess = processList.FirstOrDefault(name => name.Name == NewProcess.Name); // Retoune le processus dans la liste. 
+            Proc OldProcess = ProcessList.FirstOrDefault(name => name.Name == NewProcess.Name); // Retoune le processus dans la liste. 
             if (OldProcess != null) 
             {
-                OldProcess = NewProcess;
+                int index = processList.IndexOf(OldProcess);
+                ProcessList[index].Cpu = NewProcess.Cpu; 
+                ProcessList[index].Ram = NewProcess.Ram; 
                 return; 
             }
-            processList.Add(NewProcess); //Si le processus n'est pas dans la liste, on l'ajoute. 
-            Console.WriteLine("Nouveau processus: {0}", NewProcess.Name);
+            ProcessList.Add(NewProcess); //Si le processus n'est pas dans la liste, on l'ajoute. 
         }
 
         public Proc GetProcessInfos(String ProcessName) 
         {
-            return new Proc(ProcessName, 0, 0, null); 
+            PerformanceCounter RamCounter; 
+            PerformanceCounter CpuCounter;
+            double Ram = 0;
+            double Cpu = 0;
+            String FormattedCpu = String.Empty; 
+            String FormattedRam = String.Empty; 
+
+            try
+            {
+                RamCounter = new PerformanceCounter("Process", "Working Set", ProcessName);
+                CpuCounter = new PerformanceCounter("Process", "% Processor Time", ProcessName);
+                Cpu = CpuCounter.NextValue();
+                Thread.Sleep(500); // Laisser le temps au PerformanceCounter de calculer...
+                Ram = RamCounter.NextValue();
+                Cpu = CpuCounter.NextValue();
+
+                FormattedRam = Ram.ToString(); //FormatRam(Ram);
+                FormattedCpu = FormatCpu(Cpu); 
+            }
+            catch { Console.WriteLine("Process {0} died :(", ProcessName); }
+            
+            return new Proc(ProcessName, FormattedCpu, FormattedRam, null);  // TODO: ICONE 
+        }
+
+        public String FormatRam(Double Ram) 
+        {
+            Ram = Ram / 1024 / 1024;
+            return Math.Round(Ram, 0).ToString(); 
+        }
+
+        public String FormatCpu(Double Cpu) 
+        {
+            return Math.Round(Cpu, 2).ToString(); 
         }
 
         public List<String> GetInstancesNames(Process Proc) // Retourne tous les noms d'instances (String) d'un processus (Process). 
@@ -77,16 +114,32 @@ namespace TaskManager.ViewModels
             return new PerformanceCounterCategory("Process")
                     .GetInstanceNames().Where(instanceName => instanceName.StartsWith(Proc.ProcessName)).ToList();
         }
+        public long UpdateRamCounter()
+        {
+            long counter = 0; 
+            foreach (Proc process in processList)
+            {
+                counter += Convert.ToInt64(process.Ram); 
+            }
+            return counter / 1024 / 1024; 
+        }
+
+        public long TotalRam
+        {
+            get { return totalRam;  }
+            set { totalRam = value; NotifyPropertyChanged("TotalRam"); }
+        }
 
         public ObservableCollection<Proc> ProcessList
         {
             get { return processList;  }
-            set { processList = value; NotifyPropertyChanged("ProcessName"); }
+            set { processList = value;  NotifyPropertyChanged("ProcessList"); }
         }
 
-        public void ShowToast() {
+
+        public void ShowToast(String message) {
             Toast toast = new Toast();
-            toast.showToast("coucou"); 
+            toast.showToast(message); 
         }
 
         //Ico = Icon.ExtractAssociatedIcon(proc[i].MainModule.FileName); // Va chercher l'icône du processus. --> Ça chie toujours...

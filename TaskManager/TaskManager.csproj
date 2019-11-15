@@ -71,8 +71,8 @@
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
     </ApplicationDefinition>
-    <Compile Include="ViewModels\Proc.cs" />
-    <Compile Include="ViewModels\Toast.cs" />
+    <Compile Include="Client\Proc.cs" />
+    <Compile Include="Toast\Toast.cs" />
     <Compile Include="SystemTrayWindow.xaml.cs">
       <DependentUpon>SystemTrayWindow.xaml</DependentUpon>
     </Compile>
