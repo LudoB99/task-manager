@@ -13,7 +13,7 @@ namespace TaskManager.ViewModels
         public string Cpu { get; set; }
         public string Ram { get; set; }
         public Icon Icon { get; set; }
-
+        public bool Watched { get; set; }
         public int Id { get; set; }
 
 
@@ -23,7 +23,8 @@ namespace TaskManager.ViewModels
             this.Cpu = cpu;
             this.Ram = ram;
             this.Icon = Icon;
-            this.Id = Id; 
+            this.Id = Id;
+            Watched = false; //Par défaut le processus n'est pas surveillé.
         }
     }
 }

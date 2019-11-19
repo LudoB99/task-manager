@@ -58,7 +58,28 @@
                     </ListView>
                 </TabItem>
                 <TabItem Header="Règles">
-                    
+                    <ListView 
+                            HorizontalAlignment="Center"
+                            Height="500"
+                            VerticalAlignment="Top" 
+                            Width="780"
+                            ItemsSource="{Binding RulesList}">
+                        <ListView.View>
+                            <GridView AllowsColumnReorder="true">
+                                <GridViewColumn Header="Nom du processus" 
+                                            DisplayMemberBinding="{Binding Path=Name}"
+                                            Width="300">
+                                </GridViewColumn>
+                                <GridViewColumn Header="Condition"
+                                            DisplayMemberBinding="{Binding Path=Condition}"  
+                                            Width="100"/>
+                                <GridViewColumn Header="Type de notification" 
+                                            DisplayMemberBinding="{Binding Path=NotificationType}"
+                                            Width="200">
+                                </GridViewColumn>
+                            </GridView>
+                        </ListView.View>
+                    </ListView>
                 </TabItem>
             </TabControl>
         </Grid>

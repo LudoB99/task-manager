@@ -11,6 +11,7 @@ using System.Windows;
 using System.Windows.Input;
 using System.Windows.Threading;
 using System.Threading;
+using TaskManager.Client;
 
 namespace TaskManager.ViewModels
 {
@@ -22,16 +23,20 @@ namespace TaskManager.ViewModels
         private string totalRam;
         private string totalCpu; 
         ObservableCollection<Proc> processList; // Liste des processus dans le XAML.
+        ObservableCollection<Rule> rulesList; // List de toutes les règles dans le XAML. 
 
         public MainViewModel()
         {
-            Console.WriteLine("Démarrage");
+            toast = new Toast(); 
             Dispatch = Application.Current.Dispatcher; // Instancie le dispatcher qui gère la concurrence. 
+            rulesList = new ObservableCollection<Rule>(); // Instancie la liste des règles dans le XAML.
             processList = new ObservableCollection<Proc>(); // Instancie la liste des processus dans le XAML.
             Start(); 
         }
         public void Start() 
         {
+            Rule r = new Rule("spoolsv", "Ram", 1000, '>', "warning" );
+            rulesList.Add(r); 
             Task.Run(() => UpdateAllProcesses());
         }
 
@@ -45,8 +50,11 @@ namespace TaskManager.ViewModels
                     List<String> ProcessInstancesNames = GetInstancesNames(Process);
                     Task.Run(() => PopulateList(ProcessInstancesNames)); // Affiche les informations des processus dans le XAML.
                 }
-                Dispatch.Invoke(() => { TotalRam = UpdateRamCounter(); });
-                Dispatch.Invoke(() => { TotalCpu = UpdateCpuCounter(); });
+                Dispatch.Invoke(() => { 
+                    TotalRam = UpdateRamCounter(); 
+                    TotalCpu = UpdateCpuCounter();
+                    CheckForRules(); 
+                });
             }
         }
 
@@ -65,7 +73,7 @@ namespace TaskManager.ViewModels
             {
                 int index = processList.IndexOf(OldProcess);
                 ProcessList[index].Cpu = NewProcess.Cpu; 
-                ProcessList[index].Ram = NewProcess.Ram; 
+                ProcessList[index].Ram = NewProcess.Ram;
                 return; 
             }
             ProcessList.Add(NewProcess); //Si le processus n'est pas dans la liste, on l'ajoute. 
@@ -166,6 +174,47 @@ namespace TaskManager.ViewModels
             set { processList = value;  NotifyPropertyChanged("ProcessList"); }
         }
 
+        public void CheckForRules() 
+        {
+            foreach (Proc p in processList)
+            {
+                foreach (Rule r in rulesList)
+                {
+                    if (r.BindedProcessName.Equals(p.Name))
+                    {
+                        p.Watched = true; 
+                    }
+                }
+            }
+            ShowTriggeredRules();
+        }
+
+        public void ShowTriggeredRules() 
+        {
+            foreach (Rule r in rulesList)
+            {
+                if (r.Flagged == false)  // Si la règle n'a pas déjà été affichée.
+                {
+                    if (ThresholdIsHit(r))
+                    {
+                        string message = "La règle " + r.BindedProcessName + " " + r.Condition + " " + r.Threshold + " est activée.";
+                        toast.ShowMessage(message, r.NotificationType); // Afficher la toast avec le message
+                        r.Flagged = true; //Marquer la règle comme affichée 
+                    }
+                }
+            }
+        }
+
+        public bool ThresholdIsHit(Rule r)
+        {
+            try
+            {
+                Proc p = processList.Where(x => x.Name.Equals(r.BindedProcessName)).First();  // Trouver le processus attaché à la règle
+                return r.isTriggered(p);
+            }
+            catch { }
+            return false; 
+        }
 
         public void ShowToast(String message, String type) {
             Toast toast = new Toast();
