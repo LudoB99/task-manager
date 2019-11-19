@@ -6,39 +6,61 @@
         xmlns:local="clr-namespace:TaskManager"
         xmlns:vm="clr-namespace:TaskManager.ViewModels"
         mc:Ignorable="d"
-        Title="Gestionnaire des tâches" Height="600" Width="500"
+        Title="Gestionnaire des tâches" Height="600" Width="800"
         Icon="Resources\Icons\icon.ico">
     <Window.DataContext>
         <vm:MainViewModel />
     </Window.DataContext>
-    <Grid>
-        <TabControl>
-            <TabItem Header="Processus">
-                <ListView 
-                    HorizontalAlignment="Center"
-                    Height="500" Margin="10,10,10,10" 
-                    VerticalAlignment="Top" 
-                    Width="450"
-                    ItemsSource="{Binding ProcessList}">
-                    <ListView.View>
-                        <GridView AllowsColumnReorder="true">
-                            <GridViewColumn Header="Nom"
-                                    DisplayMemberBinding="{Binding Path=Name}"
-                                    Width="150">
-                            </GridViewColumn>
-                            <GridViewColumn Header="CPU %"
-                                    DisplayMemberBinding="{Binding Path=Cpu}"
-                                    Width="150"/>
-                            <GridViewColumn Header="{Binding TotalRam}"
-                                    DisplayMemberBinding="{Binding Path=Ram}"
-                                    Width="150"/>
-                        </GridView>
-                    </ListView.View>
-                </ListView>
-            </TabItem>
-            <TabItem Header="Règles">
-
-            </TabItem>
-        </TabControl>
-    </Grid>
+    <DockPanel>
+        <Menu DockPanel.Dock="Top" Margin="0,0,0,10">
+            <MenuItem Header="_Fichiers">
+                <MenuItem Header="_Coucou" />
+                <MenuItem Header="_Jord" />
+            </MenuItem>
+            <MenuItem Header="_Options">
+                <MenuItem Header="_Nothing" />
+                <MenuItem Header="_To" />
+                <MenuItem Header="_See" />
+                <MenuItem Header="_Here" />
+            </MenuItem>
+            <MenuItem Header="_Affichage">
+                <MenuItem Header="_PoE 2 Leaked" />
+            </MenuItem>
+        </Menu>
+        <TextBox AcceptsReturn="True" />
+        <Grid>
+            <TabControl>
+                <TabItem Header="Processus">
+                    <ListView 
+                            HorizontalAlignment="Center"
+                            Height="500"
+                            VerticalAlignment="Top" 
+                            Width="780"
+                            ItemsSource="{Binding ProcessList}">
+                        <ListView.View>
+                            <GridView AllowsColumnReorder="true">
+                                <GridViewColumn Header="Id"                            
+                                            DisplayMemberBinding="{Binding Path=Id}"
+                                            Width="50">
+                                </GridViewColumn>
+                                <GridViewColumn Header="Nom" 
+                                            DisplayMemberBinding="{Binding Path=Name}"
+                                            Width="300">
+                                </GridViewColumn>
+                                <GridViewColumn Header="{Binding TotalCpu}"
+                                            DisplayMemberBinding="{Binding Path=Cpu}"
+                                            Width="200"/>
+                                <GridViewColumn Header="{Binding TotalRam}"
+                                            DisplayMemberBinding="{Binding Path=Ram}"  
+                                            Width="200"/>
+                            </GridView>
+                        </ListView.View>
+                    </ListView>
+                </TabItem>
+                <TabItem Header="Règles">
+                    
+                </TabItem>
+            </TabControl>
+        </Grid>
+    </DockPanel>
 </Window>

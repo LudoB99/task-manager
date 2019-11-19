@@ -28,9 +28,43 @@ namespace TaskManager.ViewModels
             });
         }
 
-        public void showToast(String message)
+        public void ShowMessage(string message, string type)
         {
-            notifier.ShowInformation("Bonjour");
+            switch (type)
+            {
+                case "information":
+                    ShowInformationToast(message);
+                    break;
+                case "success":
+                    ShowSuccessToast(message);
+                    break;
+                case "warning":
+                    ShowWarningToast(message);
+                    break;
+                case "Error":
+                    ShowInformationToast(message);
+                    break;
+            }
+        }
+
+        public void ShowInformationToast(String message)
+        {
+            notifier.ShowInformation(message);
+        }
+
+        public void ShowSuccessToast(String message)
+        {
+            notifier.ShowSuccess(message);
+        }
+
+        public void ShowWarningToast(String message)
+        {
+            notifier.ShowWarning(message);
+        }
+
+        public void ShowErrorToast(String message)
+        {
+            notifier.ShowError(message);
         }
     }
 }

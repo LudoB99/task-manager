@@ -14,18 +14,16 @@ namespace TaskManager.ViewModels
         public string Ram { get; set; }
         public Icon Icon { get; set; }
 
+        public int Id { get; set; }
 
-        public Proc(String name, string cpu, string ram, Icon Icon)
+
+        public Proc(String name, string cpu, string ram, Icon Icon, int Id)
         {
             this.Name = name;
             this.Cpu = cpu;
             this.Ram = ram;
-            this.Icon = Icon; 
-        }
-
-        public String GetInfos()
-        {
-            return $"Process {Name} uses {Cpu}MB of CPU and {Ram}MB of RAM"; 
+            this.Icon = Icon;
+            this.Id = Id; 
         }
     }
 }
