@@ -73,7 +73,7 @@
                             <i:Interaction.Triggers>
                                 <i:EventTrigger EventName="MouseDoubleClick">
                                     <i:InvokeCommandAction 
-                                        Command="{Binding ModifyRule}"
+                                        Command="{Binding CommandDeleteRule}"
                                         CommandParameter="{Binding ElementName=RulesList, Path=SelectedItem}"/>
                                 </i:EventTrigger>
                             </i:Interaction.Triggers>

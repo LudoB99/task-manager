@@ -5,7 +5,6 @@ using System.Collections.ObjectModel;
 using System.Diagnostics;
 using System.Linq;
 using System.Drawing;
-using System.Text;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Input;
@@ -13,41 +12,35 @@ using System.Windows.Threading;
 using System.Threading;
 using TaskManager.Client;
 using System.Windows.Controls;
-using System.IO;
-using Newtonsoft.Json;
-using Newtonsoft.Json.Converters;
-using System.Xml.Linq;
-using MessageBox = System.Windows.MessageBox;
-using Newtonsoft.Json.Linq;
 
 namespace TaskManager.ViewModels
 {
     public class MainViewModel : ViewModelBase<MainViewModel>
     {
         Toast toast; 
-        List<Process> Processes; // Liste de tous les processus actifs. 
         private Dispatcher Dispatch;
-        private string totalRam;
-        private string totalCpu; 
-        ObservableCollection<Proc> processList; // Liste des processus dans le XAML.
-        ObservableCollection<Rule> rulesList; // List de toutes les règles dans le XAML. 
-        private ICommand _modifyRulesCommand;
+        ObservableCollection<Proc> processList; 
+        ObservableCollection<Rule> rulesList;  
+        private ICommand _deleteRuleCommand;
         private ICommand _addNewRule;
         private Json Json; 
-
         public Proc newRuleProcess;
+        private ResourceCounter ResourceCounter; 
+
+        // Variables pour le XAML --> Pas MVVM ? Incapable de binder seulement le contenu du ComboBoxItem...
         public ComboBoxItem newRuleResourceType;
-        public string newRuleThreshold;
         public ComboBoxItem newRuleCondition;
-        public ComboBoxItem newRuleNotificationType; 
+        public ComboBoxItem newRuleNotificationType;
+        public string newRuleThreshold;
 
         public MainViewModel()
         {
             toast = new Toast();
-            Json = new Json(); 
-            Dispatch = Application.Current.Dispatcher; // Instancie le dispatcher qui gère la concurrence. 
-            rulesList = Json.GetRulesListFromJson(); // Instancie la liste des règles dans le XAML.
-            processList = new ObservableCollection<Proc>(); // Instancie la liste des processus dans le XAML.
+            Json = new Json();
+            ResourceCounter = new ResourceCounter(); 
+            Dispatch = Application.Current.Dispatcher;
+            rulesList = Json.GetRulesListFromJson();
+            processList = new ObservableCollection<Proc>();
             Start(); 
         }
         public void Start() 
@@ -59,16 +52,17 @@ namespace TaskManager.ViewModels
         {
             while (true)
             {
-                Processes = Process.GetProcesses().GroupBy(p => p.ProcessName).Select(group => group.First()).ToList();
+                List<Process> Processes = Process.GetProcesses().GroupBy(p => p.ProcessName).Select(group => group.First()).ToList();
                 foreach (Process Process in Processes)
                 {
                     List<String> ProcessInstancesNames = GetInstancesNames(Process);
                     Task.Run(() => PopulateList(ProcessInstancesNames)); // Affiche les informations des processus dans le XAML.
                 }
-                Dispatch.Invoke(() => { 
-                    TotalRam = UpdateRamCounter(); 
-                    TotalCpu = UpdateCpuCounter();
-                    CheckForRules();
+                Dispatch.Invoke(() => {
+                    ResourceCounter.Update(processList);
+                    TotalRam = ResourceCounter.TotalRam;
+                    TotalCpu = ResourceCounter.TotalCpu; 
+                    UpdateProcessesRuleBinding();
                 });
             }
         }
@@ -139,63 +133,24 @@ namespace TaskManager.ViewModels
             return new PerformanceCounterCategory("Process")
                     .GetInstanceNames().Where(instanceName => instanceName.StartsWith(Proc.ProcessName)).ToList();
         }
-        public string UpdateRamCounter()
-        {
-            double counter = 0;
-            foreach (Proc process in processList)
-            {
-                try
-                { 
-                    counter += Convert.ToDouble(process.Ram);
-                }
-                catch { }; 
-               
-            }
-            return Math.Round(counter, 2).ToString(); 
-        }
-
-        public string UpdateCpuCounter()
-        {
-            double counter = 0;
-            foreach (Proc process in processList)
-            {
-                try
-                {
-                    if (!process.Cpu.Equals("0") && !process.Name.Equals("Idle")) { //Idle prend ce qui est disponible? 
-                        counter += Convert.ToDouble(process.Cpu);
-                        Console.WriteLine("Conteur: {0}", counter);
-                    }
-                }
-                catch { };
-            }
-            return Math.Round(counter, 2).ToString();
-        }
 
         public string TotalCpu
         {
-            get { return "CPU (" + totalCpu + "%)"; }
-            set { totalCpu = value; NotifyPropertyChanged("TotalCpu"); }
+            get { return "CPU (" + ResourceCounter.TotalCpu + "%)"; }
+            set { ResourceCounter.TotalCpu = value; NotifyPropertyChanged("TotalCpu"); }
         }
 
         public string TotalRam
         {
-            get { return "RAM (" + totalRam + "Mb)";  }
-            set { totalRam = value; NotifyPropertyChanged("TotalRam"); }
+            get { return "RAM (" + ResourceCounter.TotalRam + "Mb)";  }
+            set { ResourceCounter.TotalRam = value; NotifyPropertyChanged("TotalRam"); }
         }
 
-        public ObservableCollection<Proc> ProcessList
-        {
-            get { return processList; }
-            set { processList = value;  NotifyPropertyChanged("ProcessList"); }
-        }
+        /*
+         * Logique de la gestion des règles (refactor?)
+         */
 
-        public ObservableCollection<Rule> RulesList
-        {
-            get { return rulesList;  }
-            set { rulesList = value; NotifyPropertyChanged("RulesList"); }
-        }
-
-        public void CheckForRules() 
+        public void UpdateProcessesRuleBinding() 
         {
             foreach (Proc p in processList)
             {
@@ -207,42 +162,25 @@ namespace TaskManager.ViewModels
                     }
                 }
             }
-            ShowTriggeredRules();
+            NotifyTriggeredRules();
         }
 
-        public void ShowTriggeredRules() 
+        public void NotifyTriggeredRules() 
         {
-            foreach (Rule r in rulesList)
+            foreach (Rule Rule in rulesList)
             {
-                if (r.Flagged == false)  // Si la règle n'a pas déjà été affichée.
+                if (!Rule.Flagged)  // Si la règle n'a pas déjà été affichée (Pour éviter le spam). 
                 {
-                    if (ThresholdIsHit(r))
+                    if (!IsThresholdHit(Rule)) // Si la règle a été brisée. 
                     {
-                        int index = rulesList.IndexOf(r);
-                        string message = "La règle " + r.BindedProcessName + " " + r.Condition + " " + r.Threshold + " est activée.";
-                        toast.ShowMessage(message, r.NotificationType); // Afficher la toast avec le message
-                        r.Flagged = true; //Marquer la règle comme affichée 
-                        RulesList[index].Active = r.Active;
-                        Console.WriteLine(r.Active);
+                        int Index = rulesList.IndexOf(Rule);
+                        string message = Rule.GetActivatedMessage(); 
+                        toast.ShowMessage(message, Rule.NotificationType); // Afficher la toast avec le message
+                        Rule.Flagged = true; //Marquer la règle comme affichée 
+                        RulesList[Index].Active = Rule.Active;
+                        Console.WriteLine(Rule.Active);
                     }
                 }
-            }
-        }
-
-        public ICommand ModifyRule
-        {
-            get 
-            {
-                Console.WriteLine("Tu as cliqué");
-                return _modifyRulesCommand ?? (_modifyRulesCommand = new DelegateCommand<Rule>(Modify)); 
-            }
-        }
-
-        public ICommand BtnAddNewRule
-        {
-            get
-            {
-                return _addNewRule ?? (_addNewRule = new DelegateCommand(AddNewRule));
             }
         }
 
@@ -250,11 +188,11 @@ namespace TaskManager.ViewModels
         {
             string name = newRuleProcess.Name;
             string type = newRuleResourceType.Content.ToString();
-            char condition = newRuleCondition.Content.ToString().ToCharArray()[0];
+            char condition = newRuleCondition.Content.ToString() == "Plus grand que" ? '>' : '<'; // Refactor pls
             string threshold = newRuleThreshold;
             string notification = newRuleNotificationType.Content.ToString();
 
-            Rule r = new Rule(name, type, Convert.ToDouble(threshold), condition, notification);
+            Rule r = new Rule(name, type, Math.Round(Convert.ToDouble(threshold),1), condition, notification);
             AddToRulesList(r); 
         }
 
@@ -264,7 +202,7 @@ namespace TaskManager.ViewModels
             Json.AddToJsonRuleList(r); 
         }
 
-        public void Modify(Rule param)
+        public void DeleteRule(Rule param)
         {
             try
             {
@@ -280,23 +218,55 @@ namespace TaskManager.ViewModels
             }
             catch { }
         }
-
-        public void CreateNewRule()
-        {
-            Console.WriteLine("Je crée une nouvelle règle.");
-        }
         
-        public bool ThresholdIsHit(Rule r)
+        public bool IsThresholdHit(Rule Rule)
         {
             try
             {
-                Proc p = processList.Where(x => x.Name.Equals(r.BindedProcessName)).First();  // Trouver le processus attaché à la règle
-                return r.isTriggered(p);
+                Proc Process = processList.Where(x => x.Name.Equals(Rule.BindedProcessName)).First();  
+                return Rule.isTriggered(Process);
             }
             catch { }
             return false; 
         }
 
+        // Afficher les notifications 
+
+        public void ShowToast(String message, String type)
+        {
+            Toast toast = new Toast();
+            toast.ShowMessage(message, type);
+        }
+
+        /* 
+         * Bindings avec le XAML 
+         */
+         
+        // Collections 
+        public ObservableCollection<Proc> ProcessList
+        {
+            get { return processList; }
+            set { processList = value; NotifyPropertyChanged("ProcessList"); }
+        }
+
+        public ObservableCollection<Rule> RulesList
+        {
+            get { return rulesList; }
+            set { rulesList = value; NotifyPropertyChanged("RulesList"); }
+        }
+
+        // Commandes
+        public ICommand CommandDeleteRule
+        {
+            get { return _deleteRuleCommand ?? (_deleteRuleCommand = new DelegateCommand<Rule>(DeleteRule));}
+        }
+
+        public ICommand BtnAddNewRule
+        {
+            get{ return _addNewRule ?? (_addNewRule = new DelegateCommand(AddNewRule)); }
+        }
+
+        // Création d'un règle
         public Proc GetRuleSelectedProcess 
         {
             get { return newRuleProcess;  }
@@ -305,8 +275,7 @@ namespace TaskManager.ViewModels
         public string GetRuleThreshold
         {
             get { return newRuleThreshold; }
-            set 
-            { newRuleThreshold = value; NotifyPropertyChanged("GetRuleThreshold");}
+            set { newRuleThreshold = value; NotifyPropertyChanged("GetRuleThreshold");}
         }
         public ComboBoxItem GetRuleResourceType
         {
@@ -322,11 +291,6 @@ namespace TaskManager.ViewModels
         {
             get { return newRuleNotificationType; }
             set { newRuleNotificationType = value; }
-        }
-
-        public void ShowToast(String message, String type) {
-            Toast toast = new Toast();
-            toast.ShowMessage(message, type); 
         }
     }
 }

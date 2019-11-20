@@ -102,6 +102,7 @@
     </ApplicationDefinition>
     <Compile Include="Client\Json.cs" />
     <Compile Include="Client\Proc.cs" />
+    <Compile Include="Client\ResourceCounter.cs" />
     <Compile Include="Client\Rule.cs" />
     <Compile Include="Toast\Toast.cs" />
     <Compile Include="SystemTrayWindow.xaml.cs">

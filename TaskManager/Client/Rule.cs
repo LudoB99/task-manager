@@ -41,6 +41,12 @@ namespace TaskManager.Client
             return false; 
         }
 
+        public string GetActivatedMessage()
+        { 
+            return "La règle " + BindedProcessName + " " +
+                            Condition + " " + Threshold + " est activée.";
+        }
+
         public bool GreaterThan(Proc proc)
         {
             switch (ResourceType)
