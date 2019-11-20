@@ -32,13 +32,13 @@ namespace TaskManager.ViewModels
         {
             switch (type)
             {
-                case "information":
+                case "Information":
                     ShowInformationToast(message);
                     break;
-                case "success":
+                case "Success":
                     ShowSuccessToast(message);
                     break;
-                case "warning":
+                case "Warning":
                     ShowWarningToast(message);
                     break;
                 case "Error":

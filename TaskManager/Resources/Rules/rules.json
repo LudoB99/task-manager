@@ -1,0 +1,1 @@
+[{"BindedProcessName":"MSBuild#1","ResourceType":"Cpu","Threshold":23.0,"Condition":"P","NotificationType":"Success","Flagged":false,"Active":"Désactivée","FullCondition":"Cpu P 23%"},{"BindedProcessName":"MSBuild#1","ResourceType":"Cpu","Threshold":23.0,"Condition":"P","NotificationType":"Success","Flagged":false,"Active":"Désactivée","FullCondition":"Cpu P 23%"}]

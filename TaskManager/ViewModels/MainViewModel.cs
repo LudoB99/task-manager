@@ -12,6 +12,13 @@ using System.Windows.Input;
 using System.Windows.Threading;
 using System.Threading;
 using TaskManager.Client;
+using System.Windows.Controls;
+using System.IO;
+using Newtonsoft.Json;
+using Newtonsoft.Json.Converters;
+using System.Xml.Linq;
+using MessageBox = System.Windows.MessageBox;
+using Newtonsoft.Json.Linq;
 
 namespace TaskManager.ViewModels
 {
@@ -24,19 +31,27 @@ namespace TaskManager.ViewModels
         private string totalCpu; 
         ObservableCollection<Proc> processList; // Liste des processus dans le XAML.
         ObservableCollection<Rule> rulesList; // List de toutes les règles dans le XAML. 
+        private ICommand _modifyRulesCommand;
+        private ICommand _addNewRule;
+        private Json Json; 
+
+        public Proc newRuleProcess;
+        public ComboBoxItem newRuleResourceType;
+        public string newRuleThreshold;
+        public ComboBoxItem newRuleCondition;
+        public ComboBoxItem newRuleNotificationType; 
 
         public MainViewModel()
         {
-            toast = new Toast(); 
+            toast = new Toast();
+            Json = new Json(); 
             Dispatch = Application.Current.Dispatcher; // Instancie le dispatcher qui gère la concurrence. 
-            rulesList = new ObservableCollection<Rule>(); // Instancie la liste des règles dans le XAML.
+            rulesList = Json.GetRulesListFromJson(); // Instancie la liste des règles dans le XAML.
             processList = new ObservableCollection<Proc>(); // Instancie la liste des processus dans le XAML.
             Start(); 
         }
         public void Start() 
         {
-            Rule r = new Rule("spoolsv", "Ram", 1000, '>', "warning" );
-            rulesList.Add(r); 
             Task.Run(() => UpdateAllProcesses());
         }
 
@@ -53,7 +68,7 @@ namespace TaskManager.ViewModels
                 Dispatch.Invoke(() => { 
                     TotalRam = UpdateRamCounter(); 
                     TotalCpu = UpdateCpuCounter();
-                    CheckForRules(); 
+                    CheckForRules();
                 });
             }
         }
@@ -174,6 +189,12 @@ namespace TaskManager.ViewModels
             set { processList = value;  NotifyPropertyChanged("ProcessList"); }
         }
 
+        public ObservableCollection<Rule> RulesList
+        {
+            get { return rulesList;  }
+            set { rulesList = value; NotifyPropertyChanged("RulesList"); }
+        }
+
         public void CheckForRules() 
         {
             foreach (Proc p in processList)
@@ -197,14 +218,74 @@ namespace TaskManager.ViewModels
                 {
                     if (ThresholdIsHit(r))
                     {
+                        int index = rulesList.IndexOf(r);
                         string message = "La règle " + r.BindedProcessName + " " + r.Condition + " " + r.Threshold + " est activée.";
                         toast.ShowMessage(message, r.NotificationType); // Afficher la toast avec le message
                         r.Flagged = true; //Marquer la règle comme affichée 
+                        RulesList[index].Active = r.Active;
+                        Console.WriteLine(r.Active);
                     }
                 }
             }
         }
 
+        public ICommand ModifyRule
+        {
+            get 
+            {
+                Console.WriteLine("Tu as cliqué");
+                return _modifyRulesCommand ?? (_modifyRulesCommand = new DelegateCommand<Rule>(Modify)); 
+            }
+        }
+
+        public ICommand BtnAddNewRule
+        {
+            get
+            {
+                return _addNewRule ?? (_addNewRule = new DelegateCommand(AddNewRule));
+            }
+        }
+
+        public void AddNewRule()
+        {
+            string name = newRuleProcess.Name;
+            string type = newRuleResourceType.Content.ToString();
+            char condition = newRuleCondition.Content.ToString().ToCharArray()[0];
+            string threshold = newRuleThreshold;
+            string notification = newRuleNotificationType.Content.ToString();
+
+            Rule r = new Rule(name, type, Convert.ToDouble(threshold), condition, notification);
+            AddToRulesList(r); 
+        }
+
+        public void AddToRulesList(Rule r)
+        {
+            Dispatch.Invoke(() => { rulesList.Add(r); });
+            Json.AddToJsonRuleList(r); 
+        }
+
+        public void Modify(Rule param)
+        {
+            try
+            {
+                Dispatch.Invoke(() => {
+                    System.Windows.Forms.DialogResult dr = System.Windows.Forms.MessageBox.Show(
+                        "Voulez vous vraiment supprimer " + param.BindedProcessName + "?", "Supprimer une règle", System.Windows.Forms.MessageBoxButtons.YesNo);
+                    if (dr == System.Windows.Forms.DialogResult.Yes)
+                    {
+                        rulesList.Remove(rulesList.Select(x => x).Where(x => x.BindedProcessName.Equals(param.BindedProcessName)).FirstOrDefault());
+                        Json.UpdateJsonList(rulesList); 
+                    } 
+                });
+            }
+            catch { }
+        }
+
+        public void CreateNewRule()
+        {
+            Console.WriteLine("Je crée une nouvelle règle.");
+        }
+        
         public bool ThresholdIsHit(Rule r)
         {
             try
@@ -216,11 +297,36 @@ namespace TaskManager.ViewModels
             return false; 
         }
 
+        public Proc GetRuleSelectedProcess 
+        {
+            get { return newRuleProcess;  }
+            set { newRuleProcess = value; }
+        }
+        public string GetRuleThreshold
+        {
+            get { return newRuleThreshold; }
+            set 
+            { newRuleThreshold = value; NotifyPropertyChanged("GetRuleThreshold");}
+        }
+        public ComboBoxItem GetRuleResourceType
+        {
+            get { return newRuleResourceType; }
+            set { newRuleResourceType = value; }
+        }
+        public ComboBoxItem GetRuleSelectedCondition
+        {
+            get { return newRuleCondition; }
+            set { newRuleCondition = value; }
+        }
+        public ComboBoxItem GetRuleSelectedNotificationType
+        {
+            get { return newRuleNotificationType; }
+            set { newRuleNotificationType = value; }
+        }
+
         public void ShowToast(String message, String type) {
             Toast toast = new Toast();
             toast.ShowMessage(message, type); 
         }
     }
 }
-  
-

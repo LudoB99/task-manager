@@ -16,7 +16,8 @@ namespace TaskManager.Client
             this.Threshold = Threshold;
             this.Condition = Condition;
             this.NotificationType = NotificationType;
-            Flagged = false; 
+            Flagged = false;
+            Active = "Désactivée"; 
         }
 
         public bool isTriggered(Proc proc)
@@ -56,5 +57,20 @@ namespace TaskManager.Client
         public char Condition { get; set; }
         public string NotificationType { get; set; }
         public bool Flagged { get; set; }
+        public string Active
+        {
+            get { return Flagged ? "Activée" : "Désactivée";  }
+            set { }
+        }
+
+        public string FullCondition
+        {
+            get {
+                return ResourceType == "Ram" ?
+                ResourceType + " " + Condition + " " + Threshold + "Mb" :
+                ResourceType + " " + Condition + " " + Threshold + "%";
+            }
+            set { }
+        }
     }
 }
