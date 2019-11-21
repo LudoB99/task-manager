@@ -18,21 +18,24 @@ namespace TaskManager.ViewModels
 {
     public class MainViewModel : ViewModelBase<MainViewModel>
     {
+
         Toast toast; 
         private Dispatcher Dispatch;
-        ObservableCollection<Proc> processList; 
-        ObservableCollection<Rule> rulesList;  
+        private Json Json; 
+        private ResourceCounter ResourceCounter;
+
+        // Variables bindées 
         private ICommand _deleteRuleCommand;
         private ICommand _addNewRule;
-        private Json Json; 
-        public Proc newRuleProcess;
-        private ResourceCounter ResourceCounter; 
 
-        // Variables pour le XAML --> Pas MVVM ? Incapable de binder seulement le contenu du ComboBoxItem...
-        public ComboBoxItem newRuleResourceType;
-        public ComboBoxItem newRuleCondition;
-        public ComboBoxItem newRuleNotificationType;
+        ObservableCollection<Proc> processList;
+        ObservableCollection<Rule> rulesList;
+
+        public string newRuleResourceType;
+        public string newRuleCondition;
+        public string newRuleNotificationType;
         public string newRuleThreshold;
+        public string newRuleProcessname;
 
         public MainViewModel()
         {
@@ -191,11 +194,11 @@ namespace TaskManager.ViewModels
 
         public void AddNewRule()
         {
-            string name = newRuleProcess.Name;
-            string type = newRuleResourceType.Content.ToString();
-            char condition = newRuleCondition.Content.ToString() == "Plus grand que" ? '>' : '<'; // Refactor pls
+            string name = newRuleProcessname;
+            string type = newRuleResourceType;
+            char condition = newRuleCondition == "Plus grand que" ? '>' : '<';
             string threshold = newRuleThreshold;
-            string notification = newRuleNotificationType.Content.ToString();
+            string notification = newRuleNotificationType;
 
             Rule r = new Rule(name, type, Math.Round(Convert.ToDouble(threshold),1), condition, notification);
             AddToRulesList(r); 
@@ -285,30 +288,30 @@ namespace TaskManager.ViewModels
         }
 
         // Création d'un règle
-        public Proc GetRuleSelectedProcess 
+        public string GetRuleSelectedProcess 
         {
-            get { return newRuleProcess;  }
-            set { newRuleProcess = value; }
+            get { return newRuleProcessname;  }
+            set { newRuleProcessname = value; NotifyPropertyChanged("GetRuleThreshold"); }
         }
         public string GetRuleThreshold
         {
             get { return newRuleThreshold; }
             set { newRuleThreshold = value; NotifyPropertyChanged("GetRuleThreshold");}
         }
-        public ComboBoxItem GetRuleResourceType
+        public string GetRuleResourceType
         {
             get { return newRuleResourceType; }
-            set { newRuleResourceType = value; }
+            set { newRuleResourceType = value; NotifyPropertyChanged("GetRuleResourceType"); }
         }
-        public ComboBoxItem GetRuleSelectedCondition
+        public string GetRuleSelectedCondition
         {
             get { return newRuleCondition; }
-            set { newRuleCondition = value; }
+            set { newRuleCondition = value; NotifyPropertyChanged("GetRuleSelectedCondition"); }
         }
-        public ComboBoxItem GetRuleSelectedNotificationType
+        public string GetRuleSelectedNotificationType
         {
             get { return newRuleNotificationType; }
-            set { newRuleNotificationType = value; }
+            set { newRuleNotificationType = value; NotifyPropertyChanged("GetRuleSelectedNotificationType"); }
         }
     }
 }
