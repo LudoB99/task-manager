@@ -34,10 +34,9 @@ namespace TaskManager.Client
             double Counter = 0;
             foreach (String D in Data)
             {
-                if(!(D is null))
-                {
+                if (!D.Equals(string.Empty)) {
                     Counter += Convert.ToDouble(D); // ;) 
-                }  
+                }
             }
             return Math.Round(Counter, 2).ToString(); 
         }

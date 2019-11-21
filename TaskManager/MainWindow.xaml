@@ -41,20 +41,29 @@
                                 ItemsSource="{Binding ProcessList}">
                             <ListView.View>
                                 <GridView AllowsColumnReorder="true">
-                                    <GridViewColumn Header="Id"                            
+                                    <GridViewColumn Header="Id" 
                                                 DisplayMemberBinding="{Binding Path=Id}"
-                                                Width="50">
+                                                Width="50"/>
+                                    <GridViewColumn Header="" 
+                                                    Width="33">
+                                        <GridViewColumn.CellTemplate>
+                                            <DataTemplate>
+                                                <Grid>
+                                                    <Image Height="20" Source="{Binding Icon}" />
+                                                </Grid>
+                                            </DataTemplate>
+                                        </GridViewColumn.CellTemplate>
                                     </GridViewColumn>
                                     <GridViewColumn Header="Nom" 
                                                 DisplayMemberBinding="{Binding Path=Name}"
-                                                Width="300">
-                                    </GridViewColumn>
+                                                Width="300"/>
+
                                     <GridViewColumn Header="{Binding TotalCpu}"
                                                 DisplayMemberBinding="{Binding Path=Cpu}"
-                                                Width="200"/>
+                                                Width="195"/>
                                     <GridViewColumn Header="{Binding TotalRam}"
                                                 DisplayMemberBinding="{Binding Path=Ram}"  
-                                                Width="200"/>
+                                                Width="195"/>
                                 </GridView>
                             </ListView.View>
                         </ListView>

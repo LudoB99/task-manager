@@ -4,6 +4,7 @@ using System.Drawing;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using System.Windows.Media.Imaging;
 
 namespace TaskManager.ViewModels
 {
@@ -12,12 +13,12 @@ namespace TaskManager.ViewModels
         public string Name { get; set; }
         public string Cpu { get; set; }
         public string Ram { get; set; }
-        public Icon Icon { get; set; }
+        public BitmapSource Icon { get; set; }
         public bool Watched { get; set; }
         public int Id { get; set; }
 
 
-        public Proc(String name, string cpu, string ram, Icon Icon, int Id)
+        public Proc(String name, string cpu, string ram, BitmapSource Icon, int Id)
         {
             this.Name = name;
             this.Cpu = cpu;

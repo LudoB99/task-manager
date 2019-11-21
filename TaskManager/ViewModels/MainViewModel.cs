@@ -12,6 +12,7 @@ using System.Windows.Threading;
 using System.Threading;
 using TaskManager.Client;
 using System.Windows.Controls;
+using System.Windows.Media.Imaging;
 
 namespace TaskManager.ViewModels
 {
@@ -97,12 +98,12 @@ namespace TaskManager.ViewModels
             String FormattedCpu = String.Empty; 
             String FormattedRam = String.Empty;
             int Id = 0;
-            Icon Ico = null;
+            BitmapSource Icon = null;
 
             try
             {
                 Id = (int)(new PerformanceCounter("Process", "ID Process", ProcessName, true).RawValue);
-                //Ico = Icon.ExtractAssociatedIcon((Process.GetProcessById(Id).ProcessName)); 
+                Icon = GetApplicationIcon(Id); 
                 RamCounter = new PerformanceCounter("Process", "Working Set", ProcessName);
                 CpuCounter = new PerformanceCounter("Process", "% Processor Time", ProcessName);
                 Cpu = CpuCounter.NextValue() / Environment.ProcessorCount;
@@ -114,7 +115,7 @@ namespace TaskManager.ViewModels
             }
             catch { Console.WriteLine("Process {0} died :(", ProcessName); }
 
-            return new Proc(ProcessName, FormattedCpu, FormattedRam, Ico, Id);  // TODO: ICONE 
+            return new Proc(ProcessName, FormattedCpu, FormattedRam, Icon, Id);  // TODO: ICONE 
         }
 
         public String FormatRam(Double Ram) 
@@ -134,20 +135,24 @@ namespace TaskManager.ViewModels
                     .GetInstanceNames().Where(instanceName => instanceName.StartsWith(Proc.ProcessName)).ToList();
         }
 
-        public string TotalCpu
+        private BitmapSource GetApplicationIcon(int Id)
         {
-            get { return "CPU (" + ResourceCounter.TotalCpu + "%)"; }
-            set { ResourceCounter.TotalCpu = value; NotifyPropertyChanged("TotalCpu"); }
-        }
-
-        public string TotalRam
-        {
-            get { return "RAM (" + ResourceCounter.TotalRam + "Mb)";  }
-            set { ResourceCounter.TotalRam = value; NotifyPropertyChanged("TotalRam"); }
+            BitmapSource Icon = null;
+            try
+            {
+                Icon = System.Windows.Interop.Imaging.CreateBitmapSourceFromHBitmap(
+                         (System.Drawing.Icon.ExtractAssociatedIcon(Process.GetProcessById(Id).MainModule.FileName).ToBitmap)().GetHbitmap(),
+                         IntPtr.Zero,
+                         Int32Rect.Empty,
+                         BitmapSizeOptions.FromEmptyOptions());
+                Icon.Freeze();
+            }
+            catch { }; 
+            return Icon;
         }
 
         /*
-         * Logique de la gestion des règles (refactor?)
+         * Logique de la gestion des règles
          */
 
         public void UpdateProcessesRuleBinding() 
@@ -196,10 +201,10 @@ namespace TaskManager.ViewModels
             AddToRulesList(r); 
         }
 
-        public void AddToRulesList(Rule r)
+        public void AddToRulesList(Rule Rule)
         {
-            Dispatch.Invoke(() => { rulesList.Add(r); });
-            Json.AddToJsonRuleList(r); 
+            Dispatch.Invoke(() => { rulesList.Add(Rule); });
+            Json.AddToJsonRuleList(Rule); 
         }
 
         public void DeleteRule(Rule param)
@@ -253,6 +258,19 @@ namespace TaskManager.ViewModels
         {
             get { return rulesList; }
             set { rulesList = value; NotifyPropertyChanged("RulesList"); }
+        }
+
+        //Compteurs
+        public string TotalCpu
+        {
+            get { return "CPU (" + ResourceCounter.TotalCpu + "%)"; }
+            set { ResourceCounter.TotalCpu = value; NotifyPropertyChanged("TotalCpu"); }
+        }
+
+        public string TotalRam
+        {
+            get { return "RAM (" + ResourceCounter.TotalRam + "Mb)"; }
+            set { ResourceCounter.TotalRam = value; NotifyPropertyChanged("TotalRam"); }
         }
 
         // Commandes
